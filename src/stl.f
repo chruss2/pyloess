@@ -35,7 +35,7 @@
 23013 continue
       call rwts(y,n,work(1,1),rw)
       userw = .true.
-23009 goto 23008
+      goto 23008
 23010 continue
       if(.not.(no .le. 0))goto 23015
       do 23017 i = 1,n
@@ -339,7 +339,7 @@
       newns = newns+1
 23120 continue
       newnp = max(2,np)
-      nt = (1.5*newnp)/(1 - 1.5/newns) + 0.5
+      nt = int((1.5*newnp)/(1 - 1.5/newns) + 0.5)
       nt = max(3,nt)
       if(.not.(mod(nt,2) .eq. 0))goto 23122
       nt = nt+1
@@ -478,14 +478,14 @@
       tt = a(l)
 23186 continue
       k = k+1
-23187 if(.not.(a(k) .ge. t))goto 23186
+      if(.not.(a(k) .ge. t))goto 23186
       if(.not.(k .gt. l))goto 23189
       goto 23183
 23189 continue
       a(l) = a(k)
       a(k) = tt
 23184 continue
-23182 goto 23181
+      goto 23181
 23183 continue
       indl(m) = jl
       indu(m) = ju
@@ -503,7 +503,7 @@
       goto 23195
 23198 continue
       ju = ju-1
-23194 goto 23193
+      goto 23193
 23195 continue
       indl(p) = ju+1
       goto 23192
@@ -519,7 +519,7 @@
       goto 23202
 23205 continue
       jl = jl+1
-23201 goto 23200
+      goto 23200
 23202 continue
       indu(p) = jl-1
 23192 continue
@@ -540,15 +540,15 @@
 23216 continue
       a(k+1) = a(k)
       k = k-1
-23217 if(.not.(t .ge. a(k)))goto 23216
+      if(.not.(t .ge. a(k)))goto 23216
       a(k+1) = t
 23214 continue
-23210 goto 23209
+      goto 23209
 23211 continue
 23171 continue
 23167 goto 23166
 23168 continue
-23162 goto 23161
+      goto 23161
 23163 continue
       return
       end

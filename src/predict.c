@@ -1,17 +1,26 @@
 #include "S.h"
 #include "loess.h"
+#include "loessc.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 extern char *error_message;
 extern int error_status;
 
+static void
+pred_(double *y, double *x_, double *new_x, int *size_info, double *s,
+      double *weights, double *robust, double *span, int *degree,
+      int *normalize, int *parametric, int *drop_square, char **surface,
+      double *cell, char **family, long *parameter, long *a, double *xi,
+      double *vert, double *vval, double *divisor, int *se, double *fit,
+      double *se_fit);
+
 void
 predict(double *eval, int m, loess *lo, prediction *pre, int se)
 {
     int  size_info[3];
-    void pred_();
 
     pre->fit = (double *) malloc(m * sizeof(double));
     pre->se_fit = (double *) malloc(m * sizeof(double));
@@ -57,19 +66,19 @@ predict(double *eval, int m, loess *lo, prediction *pre, int se)
     }
 }
 
-void
+static void
 pred_(double *y, double *x_, double *new_x, int *size_info, double *s,
       double *weights, double *robust, double *span, int *degree,
       int *normalize, int *parametric, int *drop_square, char **surface,
-      double *cell, char **family, int *parameter, int *a, double *xi,
+      double *cell, char **family, long *parameter, long *a, double *xi,
       double *vert, double *vval, double *divisor, int *se, double *fit,
       double *se_fit)
 {
-    double  *x, *x_tmp, *x_evaluate, *L, new_cell, z, tmp, *fit_tmp,
-            *temp, sum, mean;
+    double  *x, *x_tmp, *x_evaluate, *L, new_cell, tmp, *fit_tmp,
+            *temp;
     int    N, D, M, sum_drop_sqr = 0, sum_parametric = 0,
             nonparametric = 0, *order_parametric, *order_drop_sqr;
-    int     i, j, k, p, cut, comp();
+    int     i, j, k, p, family_tmp;
 
     D = size_info[0];
     N = size_info[1];
@@ -126,8 +135,9 @@ pred_(double *y, double *x_, double *new_x, int *size_info, double *s,
 
     if(!strcmp(*surface, "direct")) {
         if(*se) {
+            family_tmp = !strcmp(*family, "gaussian") ? GAUSSIAN : SYMMETRIC;
             loess_dfitse(y, x, x_evaluate, weights, robust,
-                         !strcmp(*family, "gaussian"), span, degree,
+                         &family_tmp, span, degree,
                          &nonparametric, order_drop_sqr, &sum_drop_sqr,
                          &D, &N, &M, fit, L);
         }

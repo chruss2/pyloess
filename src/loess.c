@@ -1,5 +1,7 @@
 #include "S.h"
 #include "loess.h"
+#include "loessc.h"
+#include "loessf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,7 +61,15 @@ void
 loess_fit(loess *lo)
 {
     int    size_info[2], iterations;
-    void    loess_();
+    void    loess_(
+       double *y, double *x_, int *size_info, double *weights, double *span,
+       int *degree, int *parametric, int *drop_square, int *normalize,
+       char **statistics, char **surface, double *cell, char **trace_hat_in,
+       int *iterations, double *fitted_values, double *fitted_residuals,
+       double *enp, double *s, double *one_delta, double *two_delta,
+       double *pseudovalues, double *trace_hat_out, double *diagonal,
+       double *robust, double *divisor, long *parameter, long *a, double *xi,
+       double *vert, double *vval);
 
     size_info[0] = lo->inputs.p;
     size_info[1] = lo->inputs.n;
@@ -111,6 +121,9 @@ loess_fit(loess *lo)
     }
 }
 
+static int comp(double *d1, double *d2);
+static void condition(char **surface, char *new_stat, char **trace_hat_in);
+
 void
 loess_(double *y, double *x_, int *size_info, double *weights, double *span,
        int *degree, int *parametric, int *drop_square, int *normalize,
@@ -118,18 +131,18 @@ loess_(double *y, double *x_, int *size_info, double *weights, double *span,
        int *iterations, double *fitted_values, double *fitted_residuals,
        double *enp, double *s, double *one_delta, double *two_delta,
        double *pseudovalues, double *trace_hat_out, double *diagonal,
-       double *robust, double *divisor, int *parameter, int *a, double *xi,
+       double *robust, double *divisor, long *parameter, long *a, double *xi,
        double *vert, double *vval)
 {
     double  *x, *x_tmp, new_cell, trL, delta1, delta2, sum_squares = 0,
-            *pseudo_resid, *temp, *xi_tmp, *vert_tmp, *vval_tmp,
+            *pseudo_resid = NULL, *temp, *xi_tmp, *vert_tmp, *vval_tmp,
             *diag_tmp, trL_tmp = 0, d1_tmp = 0, d2_tmp = 0, sum, mean;
     int    i, j, k, p, N, D, sum_drop_sqr = 0, sum_parametric = 0,
             setLf, nonparametric = 0, *order_parametric,
-            *order_drop_sqr, zero = 0, max_kd, *a_tmp, *param_tmp;
-    int     cut, comp();
-    char    *new_stat, *mess;
-    void    condition();
+            *order_drop_sqr, zero = 0, max_kd, *temp_i;
+    long    *a_tmp, *param_tmp;
+    int     cut;
+    char    *new_stat;
 
     D = size_info[0];
     N = size_info[1];
@@ -139,12 +152,13 @@ loess_(double *y, double *x_, int *size_info, double *weights, double *span,
     x = (double *) malloc(D * N * sizeof(double));
     x_tmp = (double *) malloc(D * N * sizeof(double));
     temp = (double *) malloc(N * sizeof(double));
-    a_tmp = (int *) malloc(max_kd * sizeof(int));
+    temp_i = (int *) malloc(N * sizeof(int));
+    a_tmp = (long *) malloc(max_kd * sizeof(long));
     xi_tmp = (double *) malloc(max_kd * sizeof(double));
     vert_tmp = (double *) malloc(D * 2 * sizeof(double));
     vval_tmp = (double *) malloc((D + 1) * max_kd * sizeof(double));
     diag_tmp = (double *) malloc(N * sizeof(double));
-    param_tmp = (int *) malloc(N * sizeof(int));
+    param_tmp = (long *) malloc(N * sizeof(long));
     order_parametric = (int *) malloc(D * sizeof(int));
     order_drop_sqr = (int *) malloc(D * sizeof(int));
     if((*iterations) > 0)
@@ -161,7 +175,7 @@ loess_(double *y, double *x_, int *size_info, double *weights, double *span,
             k = i * N;
             for(j = 0; j < N; j++)
                 temp[j] = x_[k + j];
-            qsort(temp, N, sizeof(double), comp);
+            qsort(temp, N, sizeof(double), (int (*)(const void *, const void *))comp);
             sum = 0;
             for(j = cut; j <= (N - cut - 1); j++)
                 sum = sum + temp[j];
@@ -241,10 +255,10 @@ loess_(double *y, double *x_, int *size_info, double *weights, double *span,
             fitted_residuals[i] = y[i] - fitted_values[i];
         };
         if(j < (*iterations))
-            F77_SUB(lowesw)(fitted_residuals, &N, robust, temp);
+            F77_SUB(lowesw)(fitted_residuals, &N, robust, temp_i);
     }
     if((*iterations) > 0) {
-        F77_SUB(lowesp)(&N, y, fitted_values, weights, robust, temp,
+        F77_SUB(lowesp)(&N, y, fitted_values, weights, robust, temp_i,
 						pseudovalues);
         loess_raw(pseudovalues, x, weights, weights, &D, &N, span,
                   degree, &nonparametric, order_drop_sqr, &sum_drop_sqr,
@@ -254,7 +268,7 @@ loess_(double *y, double *x_, int *size_info, double *weights, double *span,
         for(i = 0; i < N; i++)
             pseudo_resid[i] = pseudovalues[i] - temp[i];
     }
-    if((*iterations) == 0)
+    if((*iterations) <= 0)
         for(i = 0; i < N; i++)
             sum_squares = sum_squares + weights[i] *
                     fitted_residuals[i] * fitted_residuals[i];
@@ -303,7 +317,7 @@ loess_free_mem(loess *lo)
 void
 loess_summary(loess *lo)
 {
-    printf("Number of Observations         : %d\n", lo->inputs.n);
+    printf("Number of Observations         : %ld\n", lo->inputs.n);
     printf("Equivalent Number of Parameters: %.1f\n", lo->outputs.enp);
     if(!strcmp(lo->model.family, "gaussian"))
         printf("Residual Standard Error        : ");
@@ -312,7 +326,7 @@ loess_summary(loess *lo)
     printf("%.4f\n", lo->outputs.s);
 }
 
-void
+static void
 condition(char **surface, char *new_stat, char **trace_hat_in)
 {
     if(!strcmp(*surface, "interpolate")) {
@@ -338,7 +352,7 @@ condition(char **surface, char *new_stat, char **trace_hat_in)
     }
 }
 
-int
+static int
 comp(double *d1, double *d2)
 {
     if(*d1 < *d2)

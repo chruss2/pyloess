@@ -378,7 +378,7 @@ c     internal variables
 c
       integer i,iter,j,jobu,k,kase,kk,l,ll,lls,lm1,lp1,ls,lu,m,maxit,
      *        mm,mm1,mp1,nct,nctp1,ncu,nrt,nrtp1
-      double precision ddot,t,r
+      double precision ddot,t
       double precision b,c,cs,el,emm1,f,g,dnrm2,scale,shift,sl,sm,sn,
      *                 smm1,t1,test,ztest
       logical wantu,wantv
@@ -401,6 +401,7 @@ c
 c     reduce x to bidiagonal form, storing the diagonal elements
 c     in s and the super-diagonal elements in e.
 c
+      l = 0
       info = 0
       nct = min0(n-1,p)
       nrt = max0(0,min0(p-2,n))
@@ -604,6 +605,7 @@ c        ......exit
             kase = 4
          go to 480
   410    continue
+            ls = 0
             lp1 = l + 1
             mp1 = m + 1
             do 430 lls = lp1, mp1

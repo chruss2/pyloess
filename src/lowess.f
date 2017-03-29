@@ -354,11 +354,11 @@ c  for expected output, see introduction
       double precision x(20), y(20), ys(20), rw(20), res(20)
       data x /1,2,3,4,5,10*6,8,10,12,14,50/
       data y /18,2,15,6,10,4,16,11,7,3,14,17,20,12,9,13,1,8,5,19/
-      call lowess(x,y,20,.25,0,0.,ys,rw,res)
+      call lowess(x,y,20,.25d0,0,0.d0,ys,rw,res)
       write(6,*) ys
-      call lowess(x,y,20,.25,0,3.,ys,rw,res)
+      call lowess(x,y,20,.25d0,0,3.d0,ys,rw,res)
       write(6,*) ys
-      call lowess(x,y,20,.25,2,0.,ys,rw,res)
+      call lowess(x,y,20,.25d0,2,0.d0,ys,rw,res)
       write(6,*) ys
       end
 c**************************************************************
@@ -433,7 +433,7 @@ c exact match in x
                goto  10
 c back 1 point so interpolation within delta, but always go forward
   13        i = max(last+1, i-1)
-  14        if (last .lt. n) goto  4
+            if (last .lt. n) goto  4
 c residuals
          do  15 i = 1, n
             res(i) = y(i)-ys(i)
@@ -546,8 +546,9 @@ c points are spread out enough to compute slope
 
 C Sorting by Hoare method, C.A.C.M. (1961) 321, modified by Singleton
 C C.A.C.M. (1969) 185.
-	  double precision a(n)
-	  integer iu(16), il(16)
+      double precision t, tt
+      double precision a(n)
+      integer iu(16), il(16)
       integer p
 
       i =1

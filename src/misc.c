@@ -1,7 +1,10 @@
 #include "S.h"
 #include "loess.h"
+#include "cloess.h"
+#include "misc.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /*static double fmin(double a, double b)
 {
@@ -17,7 +20,7 @@ static double fmax(double a, double b)
 void anova(loess *one, loess *two, anova_struct *out)
 {
     double  one_d1, one_d2, one_s, two_d1, two_d2, two_s,
-            rssdiff, d1diff, tmp, pf();
+            rssdiff, d1diff, tmp;
     int     max_enp;
 
     one_d1 = one->outputs.one_delta;
@@ -40,7 +43,7 @@ void anova(loess *one, loess *two, anova_struct *out)
 
 void pointwise(prediction *pre, int m, double coverage, conf_inv *ci)
 {
-    double    t_dist, limit, fit, qt();
+    double    t_dist, limit, fit;
     int    i;
 
     ci->fit = (double *) malloc(m * sizeof(double));
@@ -65,13 +68,12 @@ void pw_free_mem(conf_inv *ci)
 
 double pf(double q, double df1, double df2)
 {
-    double ibeta();
     return(ibeta(q*df1/(df2+q*df1), df1/2, df2/2));
 }
 
 double qt(double p, double df)
 {
-    double    t, invibeta();
+    double    t;
     t = invibeta(fabs(2*p-1), 0.5, df/2);
     return((p>0.5?1:-1) * sqrt(t*df/(1-t)));
 }
@@ -183,7 +185,6 @@ double invibeta(double p, double a, double b)
     int i;
     double ql, qr, qm, qdiff;
     double pl, pr, pm, pdiff;
-    double invibeta_quick(), ibeta();
 
 /*        MEANINGFUL(qm);*/
     qm = 0;
@@ -268,7 +269,7 @@ double invibeta(double p, double a, double b)
 
 double invibeta_quick(double p, double a, double b)
 {
-    double x, m, s, fmax(), fmin(), invigauss_quick();
+    double x, m, s;
 
     x = a + b;
     m = a / x;
@@ -280,9 +281,6 @@ int max(int a, int b)
 {
     return(a > b ? a : b);
 }
-
-typedef double doublereal;
-typedef int integer;
 
 void Recover(char *a, int *b)
 {

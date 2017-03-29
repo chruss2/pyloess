@@ -1,3 +1,6 @@
+#ifndef LOESS_H
+#define LOESS_H
+
 /* for the meaning of these fields, see struct.m */
 /* longs are used here so that the codes can be called from S */
 
@@ -85,3 +88,4 @@ typedef struct {
     double *lower;
     } conf_inv;
 
+#endif /* LOESS_H */
