@@ -5,7 +5,9 @@ __revision__ = "$Revision$"
 __date__     = '$Date$'
 
 import os
+import sys
 from os.path import join
+from distutils.util import get_platform
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -34,6 +36,16 @@ def configuration(parent_package='',top_path=None):
     build_info = {}
     dict_append(build_info, **blas_info)
     dict_append(build_info, libraries=['floess'])
+
+    # Shared library doesn't link properly when -lfloess refers to a
+    # static library (.a file).  No errors at link time, but ldd shows
+    # that it loads only core libraries.  Maybe a bug in gfortran???
+    # Or a bug in distutils that chooses gfortran as the linker???
+    # It works when I specify the .a file directly without using -l.
+    temp_dir = "temp.%s-%s" % (get_platform(), sys.version[0:3])
+    floess_archive = join('build', temp_dir, 'libfloess.a')
+    dict_append(build_info, extra_objects=[floess_archive])
+
     c_sources = ['loess.c', 'loessc.c', 'misc.c', 'predict.c',]
     confgr.add_extension('_loess',
                          sources=[join('src','_loess.c')] + \
